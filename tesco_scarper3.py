@@ -2,6 +2,9 @@ import pandas as pd
 import requests
 import logging
 
+# Configure logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
 # Load the list of Tesco product URLs from the Excel file
 file_path = 'Nimble Assignment (1).xlsx'  # Adjust the path as needed
 sheet_name = 'Tesco'
