@@ -23,34 +23,20 @@ headers = {
 # Nimbleway API base URL
 api_base_url = "https://api.webit.live/api/v1/realtime/web"
 
-# Parsing template for extracting product name, price, and description
-parsing_template = {
-    "product_name": {
-        "type": "item",
-        "selectors": ["//h1"],
-        "extractor": "text"
-    },
-    "price": {
-        "type": "item",
-        "selectors": ["//span[@class='price-per-sellable-unit']"],
-        "extractor": "text"
-    },
-    "product_description": {
-        "type": "item",
-        "selectors": ["//div[@class='product-details-tile-description']"],
-        "extractor": "text"
-    }
-}
-
 # URL to scrape
-url_to_scrape = "https://www.tesco.com/groceries/en-GB/products/299154020"
+url_to_scrape = "https://www.tesco.com/groceries/en-GB/products/310162011"
 
 # Payload for the API request
 payload = {
     "url": url_to_scrape,
     "method": "GET",
-    "parse": parsing_template,  # Use the parsing template directly here
+    "format": "json",
+    "parse": True,  # Enable parsing for dynamic content
     "render": True,  # Enable rendering for dynamic content
+    "render_options": {
+        "timeout": 60000,  # Wait up to 35 seconds for the page to fully load
+        "render_type": "idle0"  # Consider the page fully loaded when no new network requests are made in the last 500ms
+    },
     "country": "US",  # Set country
 }
 
@@ -61,17 +47,22 @@ logging.info(f"Response status code: {response.status_code}")
 
 # Handle the response
 if response.status_code == 200:
-    result = response.json().get('result')
-    if result:
-        parsed_data = result.get('parse')
-        if parsed_data:
-            print("Parsed Data:")
-            print(f"Product Name: {parsed_data.get('product_name')}")
-            print(f"Price: {parsed_data.get('price')}")
-            print(f"Description: {parsed_data.get('product_description')}")
-        else:
-            print("No parsed data found in the response")
+    result = response.json()
+    # logging.info(f"Response JSON: {response.json()}")
+    if result and 'parsing' in result:
+        parsed_data = result['parsing']['entities']['Product'][0]  # Access the 'Product' entity
+        
+        # Extract product name, price, and description
+        product_name = parsed_data.get('name')
+        product_description = parsed_data.get('description')
+        product_price = parsed_data['offers'].get('price')
+
+        # Print the extracted data
+        print("Parsed Data:")
+        print(f"Product Name: {product_name}")
+        print(f"Price: {product_price} GBP")
+        print(f"Description: {product_description}")
     else:
-        print("No HTML content found in the response")
+        print("No parsed data found in the response")
 else:
     print(f"Failed to scrape: {response.status_code}")
