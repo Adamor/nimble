@@ -6,15 +6,16 @@ import logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 # Load the list of Tesco product URLs from the Excel file
-file_path = 'Nimble Assignment (1).xlsx'  # Adjust the path as needed
-sheet_name = 'Tesco'
+file_path = 'Nimble Assignment (1).xlsx'  # Path to the Excel file
+sheet_name = 'Tesco' # Name of the sheet containing the URLs
 
 # Read the Excel sheet with URLs
 df = pd.read_excel(file_path, sheet_name=sheet_name)
 
-# Extract URLs
+# Extract URLs from the DataFrame
 urls = df['url'].tolist()
 
+# Set the headers for the API request
 headers = {
     'Authorization': f'Basic Y3MtY2FuZGlkYXRlQG5pbWJsZXdheS5jb206Sm9pblVzMzIxIUA=',
     'Content-Type': 'application/json'
@@ -23,20 +24,20 @@ headers = {
 # Nimbleway API base URL
 api_base_url = "https://api.webit.live/api/v1/realtime/web"
 
-# Function to scrape a single product URL and info using the parsing template
+# Function to scrape product Info
 def scrape_product(url):
     # Payload for the API request
     payload = {
-        "url": url,
-        "method": "GET",
-        "format": "json",
+        "url": url, # URL of the product to scrape
+        "method": "GET", # HTTP method to use
+        "format": "json", # Format of the response
         "parse": True,  # Enable parsing for dynamic content
         "render": True,  # Enable rendering for dynamic content
         "render_options": {
-            # "timeout": 60000,  # Set timeout to 60 seconds
+            # "timeout": 60000,  # Set timeout to 60 seconds (commented out)
             "render_type": "idle0" # Consider the page fully loaded when no new network requests are made in the last 500ms
         },
-        "country": "GB",  # Set country
+        "country": "GB",  # Set the country to Great Britain
     }
 
     # Send the scrape request
@@ -45,18 +46,19 @@ def scrape_product(url):
     logging.info(f"Response status code: {response.status_code}")
 
     # Handle the response
-    if response.status_code == 200:
+    if response.status_code == 200:  # Successful response
         result = response.json()
-       # logging.debug(f"Response JSON: {response.json()}")
-        if result and 'parsing' in result:
+        if result and 'parsing' in result:  # Check if parsing data is available
             parsed_data = result['parsing'].get('entities', {}).get('Product', [])
-            if parsed_data:
+            if parsed_data:  # Check if 'Product' entity is present
                 parsed_data = parsed_data[0]  # Assuming the first 'Product' entity
+                gtin = parsed_data.get('gtin')  # Get the GTIN from the parsed data
                 return {
+                    'gtin': gtin,  # Include the GTIN in the output
                     'url': url,
-                    'product_name': parsed_data.get('name'),
-                    'price': parsed_data['offers'].get('price'),
-                    'description': parsed_data.get('description')
+                    'product_name': parsed_data.get('name'), # Get the product name
+                    'price': parsed_data['offers'].get('price'),  # Get the product price
+                    'description': parsed_data.get('description')  # Get the product description
                 }
             else:
                 return {
@@ -88,7 +90,7 @@ for url in urls:
 result_df = pd.DataFrame(product_details)
 
 # Save the scraped data to a CSV file
-output_file = "scraped_product_details-4.csv"
+output_file = "tesco.csv"
 result_df.to_csv(output_file, index=False)
 
 print(f"Scraping complete. Data saved to {output_file}")
