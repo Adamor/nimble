@@ -1,6 +1,7 @@
 import pandas as pd
 import requests
 import logging
+import base64
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -15,9 +16,17 @@ df = pd.read_excel(file_path, sheet_name=sheet_name)
 # Extract URLs from the DataFrame
 urls = df['url'].tolist()
 
-# Set the headers for the API request
+# Credentials for authentication
+username = 'cs-candidate@nimbleway.com'
+password = 'JoinUs321!@'
+
+# Encode credentials in base64
+credentials = f"{username}:{password}"
+encoded_credentials = base64.b64encode(credentials.encode('utf-8')).decode('utf-8')
+
+# Set up headers with the encoded credentials
 headers = {
-    'Authorization': f'Basic Y3MtY2FuZGlkYXRlQG5pbWJsZXdheS5jb206Sm9pblVzMzIxIUA=',
+    'Authorization': f'Basic {encoded_credentials}',
     'Content-Type': 'application/json'
 }
 
